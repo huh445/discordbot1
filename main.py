@@ -5,7 +5,6 @@ import os
 import asyncio
 from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, AudioConfig, ResultReason
 
-source = FFmpegPCMAudio("huh445-hebuiltgary.mp3")
 
 client = commands.Bot(command_prefix = '!',intents=discord.Intents.all())
 
@@ -14,6 +13,18 @@ azure_region = "australiaeast"
 speech_config = SpeechConfig(subscription=azure_key, region=azure_region)
 audio_config = AudioConfig(filename="output.wav")
 synthesizer = SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+@client.command
+async def join(ctx):
+    voice = ctx.author.channel
+    if voice:
+        channel = voice.name
+        await voice.connect()
+        await ctx.send("Joined the voice channel.")
+    else:
+        await ctx.send("User not in voice channel.")
+
+
+
 
 @client.event
 async def on_message(message):
@@ -40,9 +51,12 @@ async def play_audio(voice_client):
     # Play the synthesized speech
     voice_client.play(discord.FFmpegPCMAudio("output.wav"))
     # Wait for the audio to finish playing
-    while voice_client.is_playing():
-        await asyncio.sleep(1)
-    # Disconnect from the voice channel after playing
-    await voice_client.disconnect()
+
+@client.command
+async def leave(ctx):
+    voice = ctx.author.channel
+    if ctx.voice:
+        await ctx.guild.voice.disconnect()
+        await ctx.send("Left the voice channel.")
 
 client.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GqDMnu.5aREcly7m40VQDa1QZlkFXfRG2tU5GkL3HA_K8")
