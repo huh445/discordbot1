@@ -24,11 +24,6 @@ async def join(ctx):
         else:
             await ctx.channel.send("You need to be in a voicechat to use the bot")
 
-
-
-
-
-
 @client.event
 async def on_message(message):
     if message.content.startswith("!"):
@@ -51,9 +46,9 @@ async def play_audio(voice_client):
 
 @client.command
 async def leave(ctx):
-    voice = ctx.author.channel
-    if ctx.voice:
-        await ctx.guild.voice.disconnect()
+    voice_client = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if ctx.voice_client:
+        await ctx.guild.voice_client.disconnect()
         await ctx.send("Left the voice channel.")
 
 client.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GqDMnu.5aREcly7m40VQDa1QZlkFXfRG2tU5GkL3HA_K8")
