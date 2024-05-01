@@ -5,7 +5,6 @@ import os
 import asyncio
 from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, AudioConfig, ResultReason
 
-
 client = commands.Bot(command_prefix = '`',intents=discord.Intents.all())
 
 azure_key = "420cdbf55b834a7ebe07ad1444242e2c"
@@ -34,28 +33,21 @@ async def join(ctx):
 async def on_message(message):
     if message.content.startswith("!"):
         if message.channel.name == "fort" and message.author != client.user and message.content.startswith != "`join" and message.content.startswith != "`leave":
-        # Convert text to speech
             result = synthesizer.speak_text_async(message.content).get()
             if result.reason == ResultReason.SynthesizingAudioCompleted:
-            # Get the voice channel of the user who sent the message
                 voice_channel = message.author.voice.channel
                 if voice_channel:
-                # Check if the bot is already in a voice channel
                     voice_client = discord.utils.get(client.voice_clients, guild=message.guild)
                     if voice_client:
-                    # If the bot is already in a voice channel, use the existing voice client
                         await play_audio(voice_client)
                     else:
-                    # If the bot is not in a voice channel, connect to the user's voice channel
                         voice_client = await voice_channel.connect()
                         await play_audio(voice_client)
                 else:   
                     await message.channel.send("You need to be in a voice channel for me to join.")
 
 async def play_audio(voice_client):
-    # Play the synthesized speech
     voice_client.play(discord.FFmpegPCMAudio("output.wav"))
-    # Wait for the audio to finish playing
 
 @client.command
 async def leave(ctx):
