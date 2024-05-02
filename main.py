@@ -3,6 +3,8 @@ from discord import FFmpegPCMAudio
 from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, AudioConfig, ResultReason
 import asyncio
 from discord import app_commands
+from discord.ext import commands
+import youtube_dl
 
 # Intents with message content for handling slash command content
 intents = discord.Intents.default()
@@ -11,6 +13,7 @@ intents.message_content = True
 # Create the bot instance
 bot = discord.Client(intents=intents)
 tree = app_commands.CommandTree(bot)
+client = commands.Bot(command_prefix=".", intents=intents)
 
 azure_key = "420cdbf55b834a7ebe07ad1444242e2c"  # Replace with your actual key
 azure_region = "australiaeast"
@@ -18,28 +21,30 @@ audio_config = AudioConfig(filename="output.wav")
 
 @tree.command(
     name="join",
-    description="Join the voice call"
+    description="Joined the voice call"
 )
 async def join(interaction):
-    voice_channel = interaction.author.voice.channel
+    voice_channel = interaction.user.voice.channel
     if voice_channel:
         voice_bot = discord.utils.get(bot.voice_clients, guild=interaction.guild)  # Use voice_clients instead of voice_bots
         if voice_bot:
-            await interaction.channel.send("The bot is already in a voice channel")
+            await interaction.response.send_message("The bot is already in a voice channel")
         else:
             voice_bot = await voice_channel.connect()
-            await interaction.channel.send("Joined the voice channel")
+            await interaction.response.send_message("Joined the voice channel")
     else:
-        await interaction.channel.send("You need to be in a voicechat to use the bot")
+        await interaction.response.send_message("You need to be in a voicechat to use the bot")
 
 
 @bot.event
 async def on_ready():
     await tree.sync()  # Register slash commands globally
     print(f"Logged in as {bot.user}")
+
 async def play_audio(voice_bot):
     try:  # Add error handling for potential exceptions
         voice_bot.play(discord.FFmpegPCMAudio("output.wav"))
+        return
     except Exception as e:
         print(f"Error playing audio: {e}")
 
@@ -52,10 +57,19 @@ async def leave(interaction):
     voice_bot = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if voice_bot:
         await voice_bot.disconnect()
-        await interaction.send("Left the voice channel.")
+        await interaction.response.send_message("Left the voice channel")
     else:
-        await interaction.respond("Not in a voice channel")
+        await interaction.response.send_message("Not in a voice channel")
 
+
+
+@client.command()
+async def stop(ctx):
+    voice_client = ctx.voice_client
+    if voice_client:
+        await voice_client.disconnect()
+    else:
+        await ctx.send("Not connected to a voice channel")
 
 #Uncomment and modify this section if you want to re-enable text-to-speech functionality
 @tree.command(
@@ -77,21 +91,23 @@ async def tts(interaction, text: str):
 
         result = synthesizer.speak_text_async(text).get()
         if result.reason == ResultReason.SynthesizingAudioCompleted:
-            voice_channel = interaction.author.voice.channel
+            audio_data = result.audio_data
+
+            with open("output.wav", "wb") as file:
+                file.write(audio_data)
+                print("Audio saved successfully.")
+            voice_channel = interaction.user.voice.channel
             if voice_channel:
                 voice_bot = discord.utils.get(bot.voice_clients, guild=interaction.guild)
                 if not voice_bot or not voice_bot.is_connected():
                     voice_bot = await voice_channel.connect()
                 await play_audio(voice_bot)
+                await interaction.response.send_message(f"Played audio: {text}")
             else:
-                await interaction.respond("You need to be in a voicechat to use the bot")
+                await interaction.response.send_message("You need to be in a voicechat to use the bot")
     except Exception as e:
         print(f"Error synthesizing speech: {e}")
-        await interaction.respond("Error synthesizing speech. Please try again later.")
-    finally:
-        # Handle potential missing close method using hasattr
-        if hasattr(synthesizer, 'close'):
-            synthesizer.close()  # Close synthesizer if available
+        await interaction.response.send_message("Error synthesizing speech. Please try again later")
 
 bot.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34")  # Replace with your actual bot token
 
