@@ -1,5 +1,5 @@
 import discord
-from discord import FFmpegPCMAudio
+from discord import FFmpegOpusAudio
 import yt_dlp
 from discord.ext import commands
 
@@ -32,18 +32,24 @@ async def play(ctx, url):
     if voice_channel:
         vc = await voice_channel.connect()
         try:
-            with yt_dlp.YoutubeDL({'format': 'bestaudio'}) as ydl:
+            # Use a format suitable for audio extraction (e.g., webm)
+            with yt_dlp.YoutubeDL({'format': 'bestaudio/best', 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'opus', 'preferredquality': '192'}]}) as ydl:
                 info = ydl.extract_info(url, download=False)
-                url2 = info['formats'][0]['url']
-                vc.play(discord.FFmpegPCMAudio(url2, executable="C:/Users/charc/Downloads/ffmpeg-master-latest-win64-gpl/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe"), after=lambda e: print('done', e))
+                # Extract relevant audio information
+                audio_url = info['url']
+                audio_duration = info['duration']
+                audio_title = info['title']
+
+                # Additional processing or message creation based on info
+                await ctx.send(f"Now playing: {audio_title} (approx. {int(audio_duration // 60)}m {audio_duration % 60}s)")
+                if vc.is_connected():
+                    vc.play(FFmpegOpusAudio(audio_url))
+        except yt_dlp.utils.DownloadError as e:
+            await ctx.send(f"An error occurred while processing audio: {str(e)}")
         except Exception as e:
-            print(f"An error occurred while playing audio: {e}")
-            await ctx.send("An error occurred while playing audio.")
-            await vc.disconnect()
+            await ctx.send(f"An unexpected error occurred: {str(e)}")
     else:
         await ctx.send("You need to be in a voice channel to use this command.")
-
-
 
 @bot.command()
 async def leave(ctx):
@@ -57,11 +63,12 @@ async def leave(ctx):
 async def stop(ctx):
     voice_client = ctx.voice_client
     if voice_client:
-        await voice_client.disconnect()
+        await voice_client.stop()
     else:
         await ctx.send("Not connected to a voice channel")
 
-bot.run("MTA0MTE2NTYxMDQ2NzQ3OTU1Mg.G3NP7u.02-reMkhAcGTjGUxB7njR_ZAwDSQ9gSEbYeTS4")  # Replace with your actual bot token
+bot.run("MTA0MTE2NTYxMDQ2NzQ3OTU1Mg.G3NP7u.02-reMkhAcGTjGUxB7njR_ZAwDSQ9gSEbYeTS4")
+
 
 #bot token for future refernce MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34
 #other token MTA0MTE2NTYxMDQ2NzQ3OTU1Mg.G3NP7u.02-reMkhAcGTjGUxB7njR_ZAwDSQ9gSEbYeTS4

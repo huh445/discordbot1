@@ -1,10 +1,10 @@
 import discord
-from discord import FFmpegPCMAudio
+from discord import FFmpegOpusAudio
 from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, AudioConfig, ResultReason
 import asyncio
 from discord import app_commands
 from discord.ext import commands
-import youtube_dl
+import yt_dlp
 
 # Intents with message content for handling slash command content
 intents = discord.Intents.default()
@@ -43,7 +43,7 @@ async def on_ready():
 
 async def play_audio(voice_bot):
     try:  # Add error handling for potential exceptions
-        voice_bot.play(discord.FFmpegPCMAudio("output.wav"))
+        voice_bot.play(discord.FFmpegOpusAudio("output.wav"))
         return
     except Exception as e:
         print(f"Error playing audio: {e}")
@@ -61,15 +61,36 @@ async def leave(interaction):
     else:
         await interaction.response.send_message("Not in a voice channel")
 
+@tree.command(
+        name="yt",
+        description="Plays a youtube video"
+)
+async def yt(interaction, url: str):
+    voice_channel = interaction.user.voice.channel
+    if voice_channel:
+        vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+        if vc:
+            print("yarp they in a vc fr fr on god")
+        else:
+            vc = await voice_channel.connect()
+        try:
+            with yt_dlp.YoutubeDL({"format": "bestaudio/best", "postprocessors": [{"key": "FFmpegExtractAudio", "preferedcodec": "opus", "preferredquality": "192"}]}) as ydl:
+                info = ydl.extract_info(url, download=False)
 
+                audio_url = info["url"]
+                audio_duration = info["duration"]
+                audio_title = info["title"]
 
-@client.command()
-async def stop(ctx):
-    voice_client = ctx.voice_client
-    if voice_client:
-        await voice_client.disconnect()
+                await interaction.response.send_message(f"Now playing: {audio_title} (approx. {int(audio_duration // 60)}m {audio_duration % 60}s)")
+                if vc.is_connected():
+                    vc.play(FFmpegOpusAudio(audio_url))
+        except yt_dlp.utils.DownloadError as e:
+            await interaction.response.send_message(f"An error occurred while processing audio: {str(e)}")
+        except Exception as e:
+            await interaction.response.send_message(f"An unexpected error occured: {str(e)}")
     else:
-        await ctx.send("Not connected to a voice channel")
+        await interaction.response.send_message("You need to be in a voice channel to use this command.")
+
 
 #Uncomment and modify this section if you want to re-enable text-to-speech functionality
 @tree.command(
