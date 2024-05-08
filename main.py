@@ -69,27 +69,28 @@ async def yt(interaction, url: str):
     voice_channel = interaction.user.voice.channel
     if voice_channel:
         vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+        await interaction.response.defer(ephemeral=True)
         if vc:
             print("yarp they in a vc fr fr on god")
         else:
             vc = await voice_channel.connect()
         try:
-            with yt_dlp.YoutubeDL({"format": "bestaudio/best", "postprocessors": [{"key": "FFmpegExtractAudio", "preferedcodec": "opus", "preferredquality": "192"}]}) as ydl:
+            with yt_dlp.YoutubeDL({"format": "bestaudio/best", "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "opus", "preferredquality": "192"}]}) as ydl:
                 info = ydl.extract_info(url, download=False)
 
                 audio_url = info["url"]
                 audio_duration = info["duration"]
                 audio_title = info["title"]
 
-                await interaction.response.send_message(f"Now playing: {audio_title} (approx. {int(audio_duration // 60)}m {audio_duration % 60}s)")
+                await interaction.followup.send(f"Now playing: {audio_title} (approx. {int(audio_duration // 60)}m {audio_duration % 60}s)")
                 if vc.is_connected():
-                    vc.play(FFmpegOpusAudio(audio_url))
+                    player = vc.play(FFmpegOpusAudio(audio_url))
         except yt_dlp.utils.DownloadError as e:
-            await interaction.response.send_message(f"An error occurred while processing audio: {str(e)}")
+            await interaction.followup.send(f"An error occurred while processing audio: {str(e)}")
         except Exception as e:
-            await interaction.response.send_message(f"An unexpected error occured: {str(e)}")
+            await interaction.followup.send(f"An unexpected error occured: {str(e)}")
     else:
-        await interaction.response.send_message("You need to be in a voice channel to use this command.")
+        await interaction.followup.send("You need to be in a voice channel to use this command.")
 
 
 #Uncomment and modify this section if you want to re-enable text-to-speech functionality
@@ -109,7 +110,7 @@ async def tts(interaction, text: str):
         # Create a new SpeechSynthesizer instance for each command
         speech_config = SpeechConfig(subscription=azure_key, region=azure_region)
         synthesizer = SpeechSynthesizer(speech_config=speech_config)
-
+        await interaction.response.defer(ephemeral=True)
         result = synthesizer.speak_text_async(text).get()
         if result.reason == ResultReason.SynthesizingAudioCompleted:
             audio_data = result.audio_data
@@ -123,12 +124,12 @@ async def tts(interaction, text: str):
                 if not voice_bot or not voice_bot.is_connected():
                     voice_bot = await voice_channel.connect()
                 await play_audio(voice_bot)
-                await interaction.response.send_message(f"Played audio: {text}")
+                await interaction.followup.send(f"Played audio: {text}")
             else:
-                await interaction.response.send_message("You need to be in a voicechat to use the bot")
+                await interaction.followup.send("You need to be in a voicechat to use the bot")
     except Exception as e:
         print(f"Error synthesizing speech: {e}")
-        await interaction.response.send_message("Error synthesizing speech. Please try again later")
+        await interaction.followup.send("Error synthesizing speech. Please try again later")
 
 bot.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34")  # Replace with your actual bot token
 
