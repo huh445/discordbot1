@@ -93,43 +93,6 @@ async def yt(interaction, url: str):
         await interaction.followup.send("You need to be in a voice channel to use this command.")
 
 
-#Uncomment and modify this section if you want to re-enable text-to-speech functionality
-@tree.command(
-    name="tts",
-    description="Converts text to speech and plays it in your voice channel"
-)
-async def tts(interaction, text: str):
-    """
-    This command takes text as input, synthesizes it into speech, and plays it
-    in the user's voice channel. Accepts multi-word sentences.
-
-    Args:
-        text (str): The text to be converted to speech (passed as an option).
-    """
-    try:
-        # Create a new SpeechSynthesizer instance for each command
-        speech_config = SpeechConfig(subscription=azure_key, region=azure_region)
-        synthesizer = SpeechSynthesizer(speech_config=speech_config)
-        await interaction.response.defer(ephemeral=True)
-        result = synthesizer.speak_text_async(text).get()
-        if result.reason == ResultReason.SynthesizingAudioCompleted:
-            audio_data = result.audio_data
-
-            with open("output.wav", "wb") as file:
-                file.write(audio_data)
-                print("Audio saved successfully.")
-            voice_channel = interaction.user.voice.channel
-            if voice_channel:
-                voice_bot = discord.utils.get(bot.voice_clients, guild=interaction.guild)
-                if not voice_bot or not voice_bot.is_connected():
-                    voice_bot = await voice_channel.connect()
-                await play_audio(voice_bot)
-                await interaction.followup.send(f"Played audio: {text}")
-            else:
-                await interaction.followup.send("You need to be in a voicechat to use the bot")
-    except Exception as e:
-        print(f"Error synthesizing speech: {e}")
-        await interaction.followup.send("Error synthesizing speech. Please try again later")
 
 bot.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34")  # Replace with your actual bot token
 
