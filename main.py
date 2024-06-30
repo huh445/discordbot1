@@ -1,6 +1,5 @@
 import discord
 from discord import FFmpegOpusAudio
-from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, AudioConfig, ResultReason
 import asyncio
 from discord import app_commands
 from discord.ext import commands
@@ -14,10 +13,6 @@ intents.message_content = True
 bot = discord.Client(intents=intents)
 tree = app_commands.CommandTree(bot)
 client = commands.Bot(command_prefix=".", intents=intents)
-
-azure_key = "420cdbf55b834a7ebe07ad1444242e2c"  # Replace with your actual key
-azure_region = "australiaeast"
-audio_config = AudioConfig(filename="output.wav")
 
 @tree.command(
     name="join",
