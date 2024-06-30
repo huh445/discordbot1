@@ -89,6 +89,4 @@ async def yt(interaction, url: str):
 
 
 
-bot.run("MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34")  # Replace with your actual bot token
-
-#bot token for future refernce MTIzNDQ1Mjk5MDUwMTQ1Mzg4Ng.GMQSwb.BqGLkG6KsRXmx6IIlmGDNiZsfL2Z2_tV7Ymi34
+bot.run("")  # Replace with your actual bot token
